@@ -156,6 +156,26 @@ class GrokPatternCapturingTests < Test::Unit::TestCase
     assert_equal(expected_map, actual_map)
   end
 
+  def test_repeated_named_captures_coerce
+    path = "#{File.dirname(__FILE__)}/../../../patterns/pure-ruby/base"
+    cases = [
+      ["%{INT:[foo][bar]:int}", "[foo][bar]", "123", 123],
+      ["%{NUMBER:[foo][baz]:float}", "[foo][baz]", "123.45", 123.45],
+      ["%{INT:[foo][qux]}", "[foo][qux]", "123", "123"]
+    ]
+
+    cases.each do |pattern, name, text, expected|
+      grok = Grok.new
+      grok.add_patterns_from_file(path)
+      grok.compile("a#{pattern}|b#{pattern}", true)
+      ["a#{text}", "b#{text}"].each do |input|
+        value = grok.match(input).captures[name].compact.first
+        assert_kind_of(expected.class, value)
+        assert_equal(expected, value)
+      end
+    end
+  end
+
   def test_match_no_capture
     grok = Grok.new
     grok.compile("^403$")

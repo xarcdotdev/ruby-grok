@@ -137,16 +137,15 @@ class Grok
     re_match = ["lambda do |match, &block|"]
     re.named_captures.each do |name, indices|
       pattern, name, coerce = name.split(":")
+      converter = case coerce
+                    when "int"; ".to_i"
+                    when "float"; ".to_f"
+                  end
       indices.each do |index|
-        coerce = case coerce
-                   when "int"; ".to_i"
-                   when "float"; ".to_f"
-                   else; ""
-                 end
         name = pattern if name.nil?
-        if coerce
+        if converter
           re_match << "  m = match[#{index}]"
-          re_match << "  block.call(#{name.inspect}, (m ? m#{coerce} : m))"
+          re_match << "  block.call(#{name.inspect}, (m ? m#{converter} : m))"
         else
           re_match << "  block.call(#{name.inspect}, match[#{index}])"
         end
